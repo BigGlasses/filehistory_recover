@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import re
-import custom_shutil as shutil
+import shutil
 import errno
 import queue
 import threading
@@ -79,13 +79,17 @@ class Main(object):
         while not fileQueue.empty():
             src, dest = fileQueue.get()
             try:
-                shutil.copy(src, dest)
+                with open(src, 'rb') as fin:
+                    with open(dest, 'wb') as fout:
+                        shutil.copyfileobj(fin, fout, 16*1024*1024)
             except IOError as e:
                 if e.errno != errno.ENOENT and e.errno != errno.EEXIST and e.errno != errno.EACCES:
                     pass
                 try:
                     os.makedirs(os.path.dirname(dest))
-                    shutil.copy(src, dest)
+                    with open(src, 'rb') as fin:
+                        with open(dest, 'wb') as fout:
+                            shutil.copyfileobj(fin, fout, 16*1024*1024)
                 except:
                     pass
             fileQueue.task_done()
@@ -140,7 +144,7 @@ class Main(object):
         print("You have selected to the input directory %s" % (
             self.config['input_directory']))
         print("The program will first list the details of directory. No data will modified at this point.")
-        print("Please wait.")
+        print("Please wait...")
         self.directories.append(self.config["input_directory"])
         self.analyseDirectory()
         self.printAnalysis()
@@ -150,6 +154,7 @@ class Main(object):
             print("Would you like to copy the files to the output folder? This will keep the original files. (Y/N)")
             if input() != "Y":
                 return
+            print("Preparing to copy files...")
             myPath = os.path.abspath("./output/")
             self.totalFiles = len(self.latestFiles)
             self.totalSize = functools.reduce(lambda x, y: x + os.path.getsize(y),
