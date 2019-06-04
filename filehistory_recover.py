@@ -4,11 +4,12 @@ import time
 import re
 import custom_shutil as shutil
 import errno
-import Queue
+import queue
 import threading
 import os
 import time
 import multiprocessing
+import functools
 
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -53,7 +54,9 @@ def newConfig():
         'modes': ["list"]
     }
 
-fileQueue = Queue.Queue()
+
+fileQueue = queue.Queue()
+
 
 class Main(object):
     totalFiles = 0
@@ -110,45 +113,46 @@ class Main(object):
         if len(self.args) == 0:
             self.args.append('copy')
 
-        print "** Undo_FileHistory **"
+        print("** Undo_FileHistory **")
         if "copy" in self.args:
-            print "You have entered copy mode."
-            print "Your files will remian in their original location, and useable copies will be stored in a new location."
-            print "Only the latest versions of files will be copied. \n"
+            print("You have entered copy mode.")
+            print("Your files will remian in their original location, and useable copies will be stored in a new location.)")
+            print("Only the latest versions of files will be copied. \n")
 
         elif "move" in self.args:
-            print "You have entered move mode."
-            print "Your files will be deleted from their original location, and useable copies will be stored in a new location."
-            print "Only the latest copies will be moved. Redundant files will be deleted. \n"
+            print("You have entered move mode.")
+            print("Your files will be deleted from their original location, and useable copies will be stored in a new location.")
+            print(
+                "Only the latest copies will be moved. Redundant files will be deleted. \n")
 
         elif "delete" in self.args:
-            print "You have entered delete mode."
-            print "Redundant files will be deleted. \n"
+            print("You have entered delete mode.")
+            print("Redundant files will be deleted. \n")
 
-        print "Beware, the use of this program can lead to data loss."
-        print "You may need to run this script with administrative privileges."
-        print "Would you like to continue? (Y/N)"
-        if raw_input() != "Y":
+        print("Beware, the use of this program can lead to data loss.")
+        print("You may need to run this script with administrative privileges.")
+        print("Would you like to continue? (Y/N)")
+        if input() != "Y":
             return
 
-        self.config['input_directory'] = raw_input(
+        self.config['input_directory'] = input(
             "Please enter the directory to search: ")
-        print "You have selected to the input directory %s" % (
-            self.config['input_directory'])
-        print "The program will first list the details of directory. No data will modified at this point."
-        print "Please wait."
+        print("You have selected to the input directory %s" % (
+            self.config['input_directory']))
+        print("The program will first list the details of directory. No data will modified at this point.")
+        print("Please wait.")
         self.directories.append(self.config["input_directory"])
         self.analyseDirectory()
         self.printAnalysis()
 
         if "copy" in self.args:
-            print "-- COPY MODE --"
-            print "Would you like to copy the files to the output folder? This will keep the original files. (Y/N)"
-            if raw_input() != "Y":
+            print("-- COPY MODE --")
+            print("Would you like to copy the files to the output folder? This will keep the original files. (Y/N)")
+            if input() != "Y":
                 return
             myPath = os.path.abspath("./output/")
             self.totalFiles = len(self.latestFiles)
-            self.totalSize = reduce(lambda x, y: x + os.path.getsize(y),
+            self.totalSize = functools.reduce(lambda x, y: x + os.path.getsize(y),
                                     map(lambda x: x['filename'], self.latestFiles.values()), 0)
             for f in self.latestFiles.keys():
                 newPath = myPath + f[len(self.config['input_directory']):]
@@ -156,18 +160,19 @@ class Main(object):
                 dest = newPath
                 fileQueue.put((src, dest))
             self.copier()
-            print "Task completed."
+            print("Task completed.")
 
         if "move" in self.args:
-            print "-- MOVE MODE -- UNIMPLEMENTED"
-            print "Would you like to move the files to a new location? This will delete the original files. (Y/N)"
-            if raw_input() != "Y":
+            print("-- MOVE MODE -- UNIMPLEMENTED")
+            print(
+                "Would you like to move the files to a new location? This will delete the original files. (Y/N)")
+            if input() != "Y":
                 return
 
         if "delete" in self.args:
-            print "-- DELETE MODE -- UNIMPLEMENTED"
-            print "Redundant files will be deleted. \n"
-            if raw_input() != "Y":
+            print("-- DELETE MODE -- UNIMPLEMENTED")
+            print("Redundant files will be deleted. \n")
+            if input() != "Y":
                 return
 
     def analyseDirectory(self):
@@ -176,7 +181,7 @@ class Main(object):
             newFiles = listdir_fullpath(directory)
             for f in newFiles:
                 if not os.path.isabs(f):
-                    print "Error, not absolute."
+                    print("Error, not absolute.")
 
                 elif os.path.isfile(f):
                     self.files.append(f)
@@ -203,7 +208,7 @@ class Main(object):
                     self.directories.append(f)
 
                 else:
-                    print "Unknown file error."
+                    print("Unknown file error.")
 
             sys.stdout.write("%i Files detected. %i Redundant files detected. \r" % (
                 len(self.files), len(self.redundants)))
@@ -212,9 +217,9 @@ class Main(object):
         pass
 
     def printAnalysis(self):
-        usefulFileSize = reduce(lambda x, y: x + os.path.getsize(y),
+        usefulFileSize = functools.reduce(lambda x, y: x + os.path.getsize(y),
                                 map(lambda x: x['filename'], self.latestFiles.values()), 0)
-        redundantFileSize = reduce(
+        redundantFileSize = functools.reduce(
             lambda x, y: x + os.path.getsize(y), self.redundants, 0)
         sys.stdout.write("%i Files detected. %i Redundant files detected. \n" % (
             len(self.files), len(self.redundants)))
@@ -243,4 +248,4 @@ if __name__ == '__main__':
         Main().run()
     except KeyboardInterrupt:
         stop = True
-        print '\nKeyboardInterrupt'
+        print('\nKeyboardInterrupt')
