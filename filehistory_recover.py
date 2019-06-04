@@ -2,7 +2,7 @@ import os
 import sys
 import time
 import re
-import shutil
+import custom_shutil as shutil
 import errno
 import Queue
 import threading
